@@ -1,2 +1,5 @@
-# Pytorch_SRGAN_Implementation_for_Face_Super-Resolution
-Pytorch_SRGAN_Implementation_for_Face_Super-Resolution
+# Pytorch SRGAN Implementation for Face Super-Resolution
+Pytorch SRGAN Implementation for Face Super-Resolution
+
+Dataset: CelebA-HQ
+Resolution Scale: x8
