@@ -22,6 +22,7 @@ class FaceData(Dataset):
         return self.transform_input(image=img)['image'], self.transform_gt(image=img)['image']
 
 if __name__ == "__main__":
+    batch_size = 1
     dataset = FaceData()
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
     for input_data, gt in data_loader:
