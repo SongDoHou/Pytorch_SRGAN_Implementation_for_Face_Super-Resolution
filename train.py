@@ -2,12 +2,12 @@ from model import Generator
 from model import Discriminator
 import torch
 import torch.optim as optim
-from dataset import FaceData, TrainData
+from dataset import FaceData
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from tqdm import tqdm
-from torchvision.models import vgg19
+from vgg_loss import VGGLoss
 
 
 def denorm(x):
@@ -17,20 +17,17 @@ def denorm(x):
 def main():
     batch_size = 16
     generator = Generator().cuda()
-    discriminator = Discriminator(96,96).cuda()
+    discriminator = Discriminator().cuda()
     optimizer_G = optim.Adam(generator.parameters(), lr=1e-4)
     optimizer_D = optim.Adam(discriminator.parameters(), lr=1e-4)
-    # dataset = FaceData('train')
-    dataset = TrainData()
+    dataset = FaceData()
+    # dataset = TrainData()
     data_loader = DataLoader(dataset, batch_size, shuffle=True, num_workers=0, pin_memory=True, drop_last=True)
     MSE = nn.MSELoss()
     BCE = nn.BCELoss()
 
-    # content loss, perceptual loss vgg / i,j == 5,4
-    vgg_net = vgg19(pretrained=True).features[:36].cuda()
-    vgg_net.eval()
-    for param in vgg_net.parameters():
-        param.requires_grad = False
+    vgg_loss_function = VGGLoss()
+    vgg_loss_function.eval()
 
     discriminator.train()
     generator.train()
@@ -44,43 +41,19 @@ def main():
 
             img_GT = img_GT.cuda()
             img_Input = img_Input.cuda()
-            
-            # # Discriminator update
-            # img_SR = generator(img_Input)
-            # fake = discriminator(img_SR)
-            # real = discriminator(img_GT)
-            # loss_Dfake = 0.001 * BCE(fake, torch.zeros(batch_size, 1).cuda())
-            # loss_Dreal = 0.001 * BCE(real, torch.ones(batch_size, 1).cuda())
-            # loss_D = 0.001 * (loss_Dfake + loss_Dreal)
-            # # if epoch > 0:
-            # discriminator.zero_grad()
-            # loss_D.backward(retain_graph=True)
-            # optimizer_D.step()
-
-            # # Generator update
-            # img_SR = generator(img_Input)
-            # loss_content = MSE(img_SR, img_GT)
-            # loss_vgg = 0.006 * MSE(vgg_net(img_SR), vgg_net(img_GT))
-            # fake = discriminator(img_SR)
-            # loss_Dfake = 0.001 * BCE(fake, torch.zeros(batch_size, 1).cuda())
-
-            # loss_G = loss_content + loss_vgg + loss_Dfake
-            # generator.zero_grad()
-            # loss_G.backward()
-            # # loss_Dfake.backward()
-            # optimizer_G.step()
-            if epoch < 10:
-                # SRResnet Initialize Generator update
-                generator.zero_grad()
-                img_SR = generator(img_Input)
-                loss_content = MSE(img_SR, img_GT)
-                loss_content.backward()
-                optimizer_G.step()
+  
+            # if epoch < 10:
+            #     # SRResnet Initialize Generator update
+            #     generator.zero_grad()
+            #     img_SR = generator(img_Input)
+            #     loss_content = MSE(img_SR, img_GT)
+            #     loss_content.backward()
+            #     optimizer_G.step()
                 
-                if step%100 == 0:
-                    print()
-                    print("Loss_content : {}".format(loss_content.item()))
-                continue
+            #     if step%100 == 0:
+            #         print()
+            #         print("Loss_content : {}".format(loss_content.item()))
+            #     continue
 
             # Discriminator update
             discriminator.zero_grad()
@@ -101,7 +74,7 @@ def main():
             # Generator update
             generator.zero_grad()
             loss_content = MSE(img_SR, img_GT)
-            loss_vgg = MSE(vgg_net(img_SR), vgg_net(img_GT))
+            loss_vgg = vgg_loss_function(img_SR, img_GT)
 
             # img_SR = generator(img_Input)
             G_fake = discriminator(img_SR)
@@ -113,7 +86,7 @@ def main():
             optimizer_G.step()
 
 
-            if step%100 == 0:
+            if step%10 == 0:
                 # :.10f
                 print()
                 print("fake out : {}".format(DG_z))
