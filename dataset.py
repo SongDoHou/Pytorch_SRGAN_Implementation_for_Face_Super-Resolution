@@ -7,9 +7,12 @@ from torch.utils.data import DataLoader
 import torch
 import numpy as np
 
+train_data_path = "C:\\Users\\SOLLA\\Desktop\\SRStudy\\CelebA-HQ_Dataset\\Train\\HQ_128x128"
+
 class FaceData(Dataset):
     def __init__(self):
-        self.train_path = "" # Training Dataset Location
+
+        self.train_path = train_data_path # Training Dataset Location
         self.train_img_list = os.walk(self.train_path).__next__()[2]
         self.len_dataset = len(self.train_img_list)
         self.transform_input = A.Compose([A.Resize(32, 32), A.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)), ToTensorV2()])
@@ -20,6 +23,9 @@ class FaceData(Dataset):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         return self.transform_input(image=img)['image'], self.transform_gt(image=img)['image']
+    
+    def __len__(self):
+        return self.len_dataset
 
 if __name__ == "__main__":
     batch_size = 1
