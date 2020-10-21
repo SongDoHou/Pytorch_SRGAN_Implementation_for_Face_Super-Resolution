@@ -78,7 +78,7 @@ def main():
 
             # img_SR = generator(img_Input)
             G_fake = discriminator(img_SR)
-            loss_Gfake = BCE(G_fake, torch.zeros(batch_size, 1).cuda())
+            loss_Gfake = BCE(G_fake, torch.ones(batch_size, 1).cuda())
 
             loss_G = loss_content + 0.006* loss_vgg + 0.001 * loss_Gfake
             loss_G.backward()
